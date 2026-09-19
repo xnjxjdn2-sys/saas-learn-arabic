@@ -15,6 +15,8 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedAppRouteImport } from './routes/_authenticated/app'
 import { Route as AuthenticatedTeacherRouteRouteImport } from './routes/_authenticated/teacher/route'
 import { Route as AuthenticatedTeacherIndexRouteImport } from './routes/_authenticated/teacher/index'
+import { Route as AuthenticatedTeacherClassesRouteImport } from './routes/_authenticated/teacher/classes'
+import { Route as AuthenticatedTeacherProfileRouteImport } from './routes/_authenticated/teacher/profile'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -47,18 +49,34 @@ const AuthenticatedTeacherIndexRoute =
     path: '/',
     getParentRoute: () => AuthenticatedTeacherRouteRoute,
   } as any)
+const AuthenticatedTeacherClassesRoute =
+  AuthenticatedTeacherClassesRouteImport.update({
+    id: '/classes',
+    path: '/classes',
+    getParentRoute: () => AuthenticatedTeacherRouteRoute,
+  } as any)
+const AuthenticatedTeacherProfileRoute =
+  AuthenticatedTeacherProfileRouteImport.update({
+    id: '/profile',
+    path: '/profile',
+    getParentRoute: () => AuthenticatedTeacherRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/teacher': typeof AuthenticatedTeacherRouteRouteWithChildren
   '/app': typeof AuthenticatedAppRoute
+  '/teacher/classes': typeof AuthenticatedTeacherClassesRoute
+  '/teacher/profile': typeof AuthenticatedTeacherProfileRoute
   '/teacher/': typeof AuthenticatedTeacherIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/app': typeof AuthenticatedAppRoute
+  '/teacher/classes': typeof AuthenticatedTeacherClassesRoute
+  '/teacher/profile': typeof AuthenticatedTeacherProfileRoute
   '/teacher': typeof AuthenticatedTeacherIndexRoute
 }
 export interface FileRoutesById {
@@ -68,13 +86,28 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/_authenticated/teacher': typeof AuthenticatedTeacherRouteRouteWithChildren
   '/_authenticated/app': typeof AuthenticatedAppRoute
+  '/_authenticated/teacher/classes': typeof AuthenticatedTeacherClassesRoute
+  '/_authenticated/teacher/profile': typeof AuthenticatedTeacherProfileRoute
   '/_authenticated/teacher/': typeof AuthenticatedTeacherIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/teacher' | '/app' | '/teacher/'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/teacher'
+    | '/app'
+    | '/teacher/classes'
+    | '/teacher/profile'
+    | '/teacher/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/app' | '/teacher'
+  to:
+    | '/'
+    | '/auth'
+    | '/app'
+    | '/teacher/classes'
+    | '/teacher/profile'
+    | '/teacher'
   id:
     | '__root__'
     | '/'
@@ -82,6 +115,8 @@ export interface FileRouteTypes {
     | '/auth'
     | '/_authenticated/teacher'
     | '/_authenticated/app'
+    | '/_authenticated/teacher/classes'
+    | '/_authenticated/teacher/profile'
     | '/_authenticated/teacher/'
   fileRoutesById: FileRoutesById
 }
@@ -135,15 +170,33 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTeacherIndexRouteImport
       parentRoute: typeof AuthenticatedTeacherRouteRoute
     }
+    '/_authenticated/teacher/classes': {
+      id: '/_authenticated/teacher/classes'
+      path: '/classes'
+      fullPath: '/teacher/classes'
+      preLoaderRoute: typeof AuthenticatedTeacherClassesRouteImport
+      parentRoute: typeof AuthenticatedTeacherRouteRoute
+    }
+    '/_authenticated/teacher/profile': {
+      id: '/_authenticated/teacher/profile'
+      path: '/profile'
+      fullPath: '/teacher/profile'
+      preLoaderRoute: typeof AuthenticatedTeacherProfileRouteImport
+      parentRoute: typeof AuthenticatedTeacherRouteRoute
+    }
   }
 }
 
 interface AuthenticatedTeacherRouteRouteChildren {
+  AuthenticatedTeacherClassesRoute: typeof AuthenticatedTeacherClassesRoute
+  AuthenticatedTeacherProfileRoute: typeof AuthenticatedTeacherProfileRoute
   AuthenticatedTeacherIndexRoute: typeof AuthenticatedTeacherIndexRoute
 }
 
 const AuthenticatedTeacherRouteRouteChildren: AuthenticatedTeacherRouteRouteChildren =
   {
+    AuthenticatedTeacherClassesRoute: AuthenticatedTeacherClassesRoute,
+    AuthenticatedTeacherProfileRoute: AuthenticatedTeacherProfileRoute,
     AuthenticatedTeacherIndexRoute: AuthenticatedTeacherIndexRoute,
   }
 
