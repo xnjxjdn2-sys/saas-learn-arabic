@@ -13,6 +13,8 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedAppRouteImport } from './routes/_authenticated/app'
+import { Route as AuthenticatedTeacherRouteRouteImport } from './routes/_authenticated/teacher/route'
+import { Route as AuthenticatedTeacherIndexRouteImport } from './routes/_authenticated/teacher/index'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -33,30 +35,54 @@ const AuthenticatedAppRoute = AuthenticatedAppRouteImport.update({
   path: '/app',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedTeacherRouteRoute =
+  AuthenticatedTeacherRouteRouteImport.update({
+    id: '/teacher',
+    path: '/teacher',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedTeacherIndexRoute =
+  AuthenticatedTeacherIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedTeacherRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/teacher': typeof AuthenticatedTeacherRouteRouteWithChildren
   '/app': typeof AuthenticatedAppRoute
+  '/teacher/': typeof AuthenticatedTeacherIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/app': typeof AuthenticatedAppRoute
+  '/teacher': typeof AuthenticatedTeacherIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/_authenticated/teacher': typeof AuthenticatedTeacherRouteRouteWithChildren
   '/_authenticated/app': typeof AuthenticatedAppRoute
+  '/_authenticated/teacher/': typeof AuthenticatedTeacherIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/app'
+  fullPaths: '/' | '/auth' | '/teacher' | '/app' | '/teacher/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/app'
-  id: '__root__' | '/' | '/_authenticated' | '/auth' | '/_authenticated/app'
+  to: '/' | '/auth' | '/app' | '/teacher'
+  id:
+    | '__root__'
+    | '/'
+    | '/_authenticated'
+    | '/auth'
+    | '/_authenticated/teacher'
+    | '/_authenticated/app'
+    | '/_authenticated/teacher/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -95,14 +121,44 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/teacher': {
+      id: '/_authenticated/teacher'
+      path: '/teacher'
+      fullPath: '/teacher'
+      preLoaderRoute: typeof AuthenticatedTeacherRouteRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/teacher/': {
+      id: '/_authenticated/teacher/'
+      path: '/'
+      fullPath: '/teacher/'
+      preLoaderRoute: typeof AuthenticatedTeacherIndexRouteImport
+      parentRoute: typeof AuthenticatedTeacherRouteRoute
+    }
   }
 }
 
+interface AuthenticatedTeacherRouteRouteChildren {
+  AuthenticatedTeacherIndexRoute: typeof AuthenticatedTeacherIndexRoute
+}
+
+const AuthenticatedTeacherRouteRouteChildren: AuthenticatedTeacherRouteRouteChildren =
+  {
+    AuthenticatedTeacherIndexRoute: AuthenticatedTeacherIndexRoute,
+  }
+
+const AuthenticatedTeacherRouteRouteWithChildren =
+  AuthenticatedTeacherRouteRoute._addFileChildren(
+    AuthenticatedTeacherRouteRouteChildren,
+  )
+
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedTeacherRouteRoute: typeof AuthenticatedTeacherRouteRouteWithChildren
   AuthenticatedAppRoute: typeof AuthenticatedAppRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedTeacherRouteRoute: AuthenticatedTeacherRouteRouteWithChildren,
   AuthenticatedAppRoute: AuthenticatedAppRoute,
 }
 
