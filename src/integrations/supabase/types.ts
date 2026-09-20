@@ -14,6 +14,61 @@ export type Database = {
   }
   public: {
     Tables: {
+      attendance: {
+        Row: {
+          created_at: string
+          id: string
+          lesson_id: string
+          note: string | null
+          status: Database["public"]["Enums"]["attendance_status"]
+          student_id: string
+          teacher_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          lesson_id: string
+          note?: string | null
+          status?: Database["public"]["Enums"]["attendance_status"]
+          student_id: string
+          teacher_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          lesson_id?: string
+          note?: string | null
+          status?: Database["public"]["Enums"]["attendance_status"]
+          student_id?: string
+          teacher_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendance_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "lessons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attendance_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attendance_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "teachers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       centers: {
         Row: {
           address: string | null
@@ -43,6 +98,60 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      class_posts: {
+        Row: {
+          body: string | null
+          class_id: string
+          created_at: string
+          file_path: string | null
+          id: string
+          teacher_id: string
+          title: string
+          type: Database["public"]["Enums"]["post_type"]
+          updated_at: string
+          url: string | null
+        }
+        Insert: {
+          body?: string | null
+          class_id: string
+          created_at?: string
+          file_path?: string | null
+          id?: string
+          teacher_id: string
+          title: string
+          type?: Database["public"]["Enums"]["post_type"]
+          updated_at?: string
+          url?: string | null
+        }
+        Update: {
+          body?: string | null
+          class_id?: string
+          created_at?: string
+          file_path?: string | null
+          id?: string
+          teacher_id?: string
+          title?: string
+          type?: Database["public"]["Enums"]["post_type"]
+          updated_at?: string
+          url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "class_posts_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "class_posts_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "teachers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       classes: {
         Row: {
@@ -150,6 +259,66 @@ export type Database = {
           },
         ]
       }
+      lesson_content: {
+        Row: {
+          body: string | null
+          created_at: string
+          file_path: string | null
+          file_size: number | null
+          id: string
+          lesson_id: string
+          sort_order: number
+          teacher_id: string
+          title: string
+          type: Database["public"]["Enums"]["content_type"]
+          updated_at: string
+          url: string | null
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string
+          file_path?: string | null
+          file_size?: number | null
+          id?: string
+          lesson_id: string
+          sort_order?: number
+          teacher_id: string
+          title: string
+          type: Database["public"]["Enums"]["content_type"]
+          updated_at?: string
+          url?: string | null
+        }
+        Update: {
+          body?: string | null
+          created_at?: string
+          file_path?: string | null
+          file_size?: number | null
+          id?: string
+          lesson_id?: string
+          sort_order?: number
+          teacher_id?: string
+          title?: string
+          type?: Database["public"]["Enums"]["content_type"]
+          updated_at?: string
+          url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lesson_content_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "lessons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lesson_content_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "teachers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lessons: {
         Row: {
           class_id: string
@@ -197,6 +366,63 @@ export type Database = {
           },
           {
             foreignKeyName: "lessons_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "teachers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payments: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          month: number
+          note: string | null
+          paid: boolean
+          paid_at: string | null
+          student_id: string
+          teacher_id: string
+          updated_at: string
+          year: number
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          id?: string
+          month: number
+          note?: string | null
+          paid?: boolean
+          paid_at?: string | null
+          student_id: string
+          teacher_id: string
+          updated_at?: string
+          year: number
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          month?: number
+          note?: string | null
+          paid?: boolean
+          paid_at?: string | null
+          student_id?: string
+          teacher_id?: string
+          updated_at?: string
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_teacher_id_fkey"
             columns: ["teacher_id"]
             isOneToOne: false
             referencedRelation: "teachers"
@@ -379,8 +605,11 @@ export type Database = {
     }
     Enums: {
       app_role: "teacher" | "student" | "center_manager"
+      attendance_status: "present" | "absent"
+      content_type: "video" | "image" | "file" | "link" | "text"
       enrollment_status: "active" | "paused" | "left"
       lesson_status: "scheduled" | "done" | "cancelled"
+      post_type: "announcement" | "video" | "image" | "file" | "link" | "text"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -509,8 +738,11 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["teacher", "student", "center_manager"],
+      attendance_status: ["present", "absent"],
+      content_type: ["video", "image", "file", "link", "text"],
       enrollment_status: ["active", "paused", "left"],
       lesson_status: ["scheduled", "done", "cancelled"],
+      post_type: ["announcement", "video", "image", "file", "link", "text"],
     },
   },
 } as const
