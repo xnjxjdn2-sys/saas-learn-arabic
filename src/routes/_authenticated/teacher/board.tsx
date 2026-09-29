@@ -47,7 +47,7 @@ function BoardPage() {
         .eq("teacher_id", teacher!.id)
         .order("name");
       if (error) throw error;
-      if (data?.length && !classId) setClassId(data[0].id);
+      if (data?.length && !classId) setClassId(data[0]!.id);
       return data;
     },
   });
