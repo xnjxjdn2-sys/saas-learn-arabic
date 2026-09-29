@@ -10,6 +10,10 @@ import {
   LogOut,
   Menu,
   GraduationCap,
+  ClipboardList,
+  Wallet,
+  FileText,
+  Megaphone,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -21,10 +25,14 @@ export const Route = createFileRoute("/_authenticated/teacher")({
 });
 
 const navItems = [
-  { to: "/teacher", label: "نظرة عامة", icon: LayoutDashboard, exact: true },
+  { to: "/teacher", label: "الرئيسية", icon: LayoutDashboard, exact: true },
+  { to: "/teacher/students", label: "الطلاب", icon: Users, exact: false },
   { to: "/teacher/classes", label: "الصفوف", icon: BookOpen, exact: false },
   { to: "/teacher/lessons", label: "الحصص", icon: CalendarDays, exact: false },
-  { to: "/teacher/students", label: "الطلاب", icon: Users, exact: false },
+  { to: "/teacher/content", label: "المحتوى", icon: FileText, exact: false },
+  { to: "/teacher/attendance", label: "الحضور", icon: ClipboardList, exact: false },
+  { to: "/teacher/payments", label: "المدفوعات", icon: Wallet, exact: false },
+  { to: "/teacher/board", label: "لوحة الصف", icon: Megaphone, exact: false },
   { to: "/teacher/profile", label: "ملفي", icon: UserCog, exact: false },
 ] as const;
 
