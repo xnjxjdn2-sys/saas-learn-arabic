@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedAppRouteImport } from './routes/_authenticated/app'
+import { Route as AuthenticatedCenterRouteImport } from './routes/_authenticated/center'
 import { Route as AuthenticatedStudentRouteImport } from './routes/_authenticated/student'
 import { Route as AuthenticatedTeacherRouteRouteImport } from './routes/_authenticated/teacher/route'
 import { Route as AuthenticatedTeacherIndexRouteImport } from './routes/_authenticated/teacher/index'
@@ -43,6 +44,11 @@ const AuthRoute = AuthRouteImport.update({
 const AuthenticatedAppRoute = AuthenticatedAppRouteImport.update({
   id: '/app',
   path: '/app',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedCenterRoute = AuthenticatedCenterRouteImport.update({
+  id: '/center',
+  path: '/center',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedStudentRoute = AuthenticatedStudentRouteImport.update({
@@ -122,6 +128,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/teacher': typeof AuthenticatedTeacherRouteRouteWithChildren
   '/app': typeof AuthenticatedAppRoute
+  '/center': typeof AuthenticatedCenterRoute
   '/student': typeof AuthenticatedStudentRoute
   '/teacher/attendance': typeof AuthenticatedTeacherAttendanceRoute
   '/teacher/board': typeof AuthenticatedTeacherBoardRoute
@@ -138,6 +145,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/app': typeof AuthenticatedAppRoute
+  '/center': typeof AuthenticatedCenterRoute
   '/student': typeof AuthenticatedStudentRoute
   '/teacher/attendance': typeof AuthenticatedTeacherAttendanceRoute
   '/teacher/board': typeof AuthenticatedTeacherBoardRoute
@@ -157,6 +165,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/_authenticated/teacher': typeof AuthenticatedTeacherRouteRouteWithChildren
   '/_authenticated/app': typeof AuthenticatedAppRoute
+  '/_authenticated/center': typeof AuthenticatedCenterRoute
   '/_authenticated/student': typeof AuthenticatedStudentRoute
   '/_authenticated/teacher/attendance': typeof AuthenticatedTeacherAttendanceRoute
   '/_authenticated/teacher/board': typeof AuthenticatedTeacherBoardRoute
@@ -176,6 +185,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/teacher'
     | '/app'
+    | '/center'
     | '/student'
     | '/teacher/attendance'
     | '/teacher/board'
@@ -192,6 +202,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/app'
+    | '/center'
     | '/student'
     | '/teacher/attendance'
     | '/teacher/board'
@@ -210,6 +221,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/_authenticated/teacher'
     | '/_authenticated/app'
+    | '/_authenticated/center'
     | '/_authenticated/student'
     | '/_authenticated/teacher/attendance'
     | '/_authenticated/teacher/board'
@@ -257,6 +269,13 @@ declare module '@tanstack/react-router' {
       path: '/app'
       fullPath: '/app'
       preLoaderRoute: typeof AuthenticatedAppRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/center': {
+      id: '/_authenticated/center'
+      path: '/center'
+      fullPath: '/center'
+      preLoaderRoute: typeof AuthenticatedCenterRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/student': {
@@ -395,12 +414,14 @@ const AuthenticatedTeacherRouteRouteWithChildren =
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedTeacherRouteRoute: typeof AuthenticatedTeacherRouteRouteWithChildren
   AuthenticatedAppRoute: typeof AuthenticatedAppRoute
+  AuthenticatedCenterRoute: typeof AuthenticatedCenterRoute
   AuthenticatedStudentRoute: typeof AuthenticatedStudentRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedTeacherRouteRoute: AuthenticatedTeacherRouteRouteWithChildren,
   AuthenticatedAppRoute: AuthenticatedAppRoute,
+  AuthenticatedCenterRoute: AuthenticatedCenterRoute,
   AuthenticatedStudentRoute: AuthenticatedStudentRoute,
 }
 

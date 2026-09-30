@@ -19,9 +19,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
 import { useMyProfile, useMyTeacher, useMyRole, roleLabels } from "@/lib/auth";
+import { RoleGuard } from "@/components/RoleGuard";
 
 export const Route = createFileRoute("/_authenticated/teacher")({
-  component: TeacherLayout,
+  component: () => (
+    <RoleGuard role="teacher">
+      <TeacherLayout />
+    </RoleGuard>
+  ),
 });
 
 const navItems = [
