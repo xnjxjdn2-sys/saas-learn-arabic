@@ -6,7 +6,7 @@ export const Route = createFileRoute("/_authenticated/app")({
   head: () => ({
     meta: [
       { title: "لوحتي — نظام المدرس والطلاب" },
-      { name: "description", content: "توجيه تلقائي إلى لوحة المدرس أو لوحة الطالب." },
+      { name: "description", content: "توجيه تلقائي إلى لوحة المدرس أو الطالب أو مدير السنتر." },
       { property: "og:title", content: "لوحتي — نظام المدرس والطلاب" },
       { property: "og:description", content: "توجيه تلقائي حسب نوع الحساب." },
     ],
@@ -15,14 +15,23 @@ export const Route = createFileRoute("/_authenticated/app")({
 });
 
 function RoleRouter() {
-  const { data: role, isPending } = useMyRole();
+  const { data: role, isPending, isError } = useMyRole();
   const navigate = useNavigate();
 
   useEffect(() => {
     if (isPending) return;
     if (role === "student") navigate({ to: "/student", replace: true });
-    else navigate({ to: "/teacher", replace: true });
+    else if (role === "center_manager") navigate({ to: "/center", replace: true });
+    else if (role === "teacher") navigate({ to: "/teacher", replace: true });
   }, [role, isPending, navigate]);
+
+  if (!isPending && (isError || !role)) {
+    return (
+      <div className="flex min-h-screen items-center justify-center p-6 text-center text-sm text-muted-foreground">
+        لا يوجد دور مرتبط بحسابك. تواصل مع الدعم.
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen items-center justify-center text-sm text-muted-foreground">

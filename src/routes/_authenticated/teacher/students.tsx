@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, Pencil, Search, ChevronLeft } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,17 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useMyTeacher } from "@/lib/auth";
+import { StudentEditForm } from "@/components/StudentEditForm";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export const Route = createFileRoute("/_authenticated/teacher/students")({
   head: () => ({
@@ -33,6 +44,9 @@ function StudentsPage() {
   const [guardian, setGuardian] = useState("");
   const [grade, setGrade] = useState("");
   const [classId, setClassId] = useState("");
+  const [search, setSearch] = useState("");
+  const [editing, setEditing] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState<{ id: string; name: string } | null>(null);
 
   const { data: classes } = useQuery({
     queryKey: ["classes", teacher?.id],
@@ -101,14 +115,26 @@ function StudentsPage() {
 
   const remove = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("students").delete().eq("id", id);
+      const { error } = await supabase.from("students").delete().eq("id", id).eq("teacher_id", teacher!.id);
       if (error) throw error;
     },
     onSuccess: () => {
       toast.success("تم حذف الطالب");
+      setDeleting(null);
       queryClient.invalidateQueries({ queryKey: ["students"] });
     },
+    onError: () => toast.error("تعذّر حذف الطالب (قد تكون له سجلات حضور أو مدفوعات)"),
   });
+
+  const q = search.trim().toLowerCase();
+  const filtered = (students ?? []).filter(
+    (s) =>
+      !q ||
+      s.full_name.toLowerCase().includes(q) ||
+      (s.phone ?? "").includes(q) ||
+      (s.guardian_phone ?? "").includes(q),
+  );
+  const editingStudent = (students ?? []).find((s) => s.id === editing);
 
   if (!teacher) {
     return (
@@ -192,16 +218,30 @@ function StudentsPage() {
         </Dialog>
       </div>
 
+      <div className="relative max-w-sm">
+        <Search className="absolute right-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          placeholder="ابحث بالاسم أو رقم الهاتف"
+          className="pr-9"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+      </div>
+
       {isPending ? (
         <p className="text-sm text-muted-foreground">جارٍ التحميل...</p>
-      ) : students?.length ? (
+      ) : filtered.length ? (
         <div className="surface-card divide-y divide-border">
-          {students.map((s) => {
+          {filtered.map((s) => {
             const enrollments = (s.enrollments ?? []) as { id: string; classes: { name: string } | null }[];
             return (
               <div key={s.id} className="flex flex-wrap items-center justify-between gap-3 p-4">
-                <div>
-                  <p className="font-medium">{s.full_name}</p>
+                <Link
+                  to="/teacher/students/$studentId"
+                  params={{ studentId: s.id }}
+                  className="min-w-0 flex-1 rounded-md hover:opacity-80"
+                >
+                  <p className="font-medium text-primary">{s.full_name}</p>
                   <p className="text-sm text-muted-foreground">
                     {s.grade_level || "بدون صف دراسي"} {s.phone ? `· ${s.phone}` : ""}
                   </p>
@@ -212,25 +252,69 @@ function StudentsPage() {
                       </Badge>
                     ))}
                   </div>
+                </Link>
+                <div className="flex items-center gap-1">
+                  <Button variant="ghost" size="icon" aria-label="تعديل" onClick={() => setEditing(s.id)}>
+                    <Pencil className="size-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    aria-label="حذف"
+                    className="text-destructive"
+                    onClick={() => setDeleting({ id: s.id, name: s.full_name })}
+                  >
+                    <Trash2 className="size-4" />
+                  </Button>
+                  <Button asChild variant="ghost" size="icon" aria-label="عرض الملف">
+                    <Link to="/teacher/students/$studentId" params={{ studentId: s.id }}>
+                      <ChevronLeft className="size-4" />
+                    </Link>
+                  </Button>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  aria-label="حذف"
-                  className="text-destructive"
-                  onClick={() => remove.mutate(s.id)}
-                >
-                  <Trash2 className="size-4" />
-                </Button>
               </div>
             );
           })}
         </div>
       ) : (
         <div className="surface-card p-8 text-center text-sm text-muted-foreground">
-          لا يوجد طلاب بعد. أضف أول طالب.
+          {q ? "لا توجد نتائج مطابقة للبحث." : "لا يوجد طلاب بعد. أضف أول طالب."}
         </div>
       )}
+
+      <Dialog open={!!editingStudent} onOpenChange={(o) => !o && setEditing(null)}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>تعديل بيانات الطالب</DialogTitle>
+          </DialogHeader>
+          {editingStudent && (
+            <StudentEditForm student={editingStudent} teacherId={teacher.id} onSaved={() => setEditing(null)} />
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={!!deleting} onOpenChange={(o) => !o && setDeleting(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>حذف الطالب «{deleting?.name}»؟</AlertDialogTitle>
+            <AlertDialogDescription>
+              سيتم حذف الطالب نهائيًا من قائمتك. لا يمكن التراجع عن هذا الإجراء.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>إلغاء</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={(e) => {
+                e.preventDefault();
+                if (deleting) remove.mutate(deleting.id);
+              }}
+            >
+              {remove.isPending ? "جارٍ الحذف..." : "حذف"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

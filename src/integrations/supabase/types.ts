@@ -600,8 +600,19 @@ export type Database = {
       }
       is_center_manager_of: { Args: { _center_id: string }; Returns: boolean }
       is_enrolled_student: { Args: { _class_id: string }; Returns: boolean }
+      list_centers_directory: {
+        Args: never
+        Returns: {
+          id: string
+          name: string
+        }[]
+      }
       manages_teacher: { Args: { _teacher_id: string }; Returns: boolean }
       owns_teacher: { Args: { _teacher_id: string }; Returns: boolean }
+      remove_teacher_from_center: {
+        Args: { _teacher_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       app_role: "teacher" | "student" | "center_manager"

@@ -11,6 +11,39 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useMyProfile, useMyTeacher, useSession } from "@/lib/auth";
 
+const SUBJECTS = ["اللغة العربية","اللغة الإنجليزية","الرياضيات","العلوم","الفيزياء","الكيمياء","الأحياء","الدراسات الاجتماعية","التاريخ","الجغرافيا","الفلسفة وعلم النفس","اللغة الفرنسية","اللغة الألمانية","الحاسب الآلي","التربية الدينية"];
+const STAGES = ["المرحلة الابتدائية","المرحلة الإعدادية","المرحلة الثانوية","جامعي","كل المراحل"];
+const OTHER = "__other__";
+
+function PickOrOther({ id, label, options, value, onChange, required, placeholder }: {
+  id: string; label: string; options: string[]; value: string; onChange: (v: string) => void; required?: boolean; placeholder: string;
+}) {
+  const isOther = value !== "" && !options.includes(value);
+  const [otherMode, setOtherMode] = useState(false);
+  const showOther = otherMode || isOther;
+  return (
+    <div className="space-y-2">
+      <Label htmlFor={id}>{label}{!required && <span className="text-xs text-muted-foreground"> (اختياري)</span>}</Label>
+      <Select
+        value={showOther ? OTHER : value}
+        onValueChange={(v) => {
+          if (v === OTHER) { setOtherMode(true); onChange(""); }
+          else { setOtherMode(false); onChange(v); }
+        }}
+      >
+        <SelectTrigger id={id}><SelectValue placeholder={placeholder} /></SelectTrigger>
+        <SelectContent>
+          {options.map((o) => <SelectItem key={o} value={o}>{o}</SelectItem>)}
+          <SelectItem value={OTHER}>أخرى</SelectItem>
+        </SelectContent>
+      </Select>
+      {showOther && (
+        <Input required={required} placeholder="اكتب هنا" value={value} onChange={(e) => onChange(e.target.value)} />
+      )}
+    </div>
+  );
+}
+
 export const Route = createFileRoute("/_authenticated/teacher/profile")({
   head: () => ({
     meta: [
@@ -40,7 +73,7 @@ function TeacherProfile() {
   const { data: centers } = useQuery({
     queryKey: ["visible-centers"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("centers").select("id,name").order("name");
+      const { data, error } = await supabase.rpc("list_centers_directory");
       if (error) throw error;
       return data;
     },
@@ -103,6 +136,7 @@ function TeacherProfile() {
         className="surface-card space-y-5 p-6"
         onSubmit={(e) => {
           e.preventDefault();
+          if (!subject.trim()) { toast.error("اختر المادة"); return; }
           save.mutate();
         }}
       >
@@ -111,33 +145,16 @@ function TeacherProfile() {
             <Label htmlFor="fullName">الاسم الكامل</Label>
             <Input id="fullName" required value={fullName} onChange={(e) => setFullName(e.target.value)} />
           </div>
+          <PickOrOther id="subject" label="المادة" required options={SUBJECTS} value={subject} onChange={setSubject} placeholder="اختر المادة" />
+          <PickOrOther id="stage" label="المرحلة الدراسية" options={STAGES} value={stage} onChange={setStage} placeholder="اختر المرحلة" />
           <div className="space-y-2">
-            <Label htmlFor="subject">المادة</Label>
-            <Input
-              id="subject"
-              required
-              placeholder="مثال: رياضيات"
-              value={subject}
-              onChange={(e) => setSubject(e.target.value)}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="stage">المرحلة الدراسية</Label>
-            <Input
-              id="stage"
-              placeholder="مثال: ثانوي"
-              value={stage}
-              onChange={(e) => setStage(e.target.value)}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="phone">رقم الهاتف</Label>
+            <Label htmlFor="phone">رقم الهاتف <span className="text-xs text-muted-foreground">(اختياري)</span></Label>
             <Input id="phone" dir="ltr" value={phone} onChange={(e) => setPhone(e.target.value)} />
           </div>
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="bio">نبذة</Label>
+          <Label htmlFor="bio">نبذة تعريفية <span className="text-xs text-muted-foreground">(اختياري)</span></Label>
           <Textarea id="bio" rows={3} value={bio} onChange={(e) => setBio(e.target.value)} />
         </div>
 
