@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useMyTeacher } from "@/lib/auth";
 import { arabicMonths } from "@/lib/content-utils";
+import { StudentEditForm } from "@/components/StudentEditForm";
 
 export const Route = createFileRoute("/_authenticated/teacher/students/$studentId")({
   head: () => ({
@@ -22,29 +23,32 @@ export const Route = createFileRoute("/_authenticated/teacher/students/$studentI
 function StudentDetailPage() {
   const { studentId } = Route.useParams();
   const { data: teacher } = useMyTeacher();
+  const teacherId = teacher?.id;
 
-  const { data: student } = useQuery({
-    queryKey: ["student", studentId],
-    enabled: !!teacher?.id,
+  const { data: student, isPending: studentPending } = useQuery({
+    queryKey: ["student", studentId, teacherId],
+    enabled: !!teacherId,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("students")
         .select("*, enrollments(classes(name))")
         .eq("id", studentId)
-        .single();
+        .eq("teacher_id", teacherId!)
+        .maybeSingle();
       if (error) throw error;
       return data;
     },
   });
 
   const { data: attendance } = useQuery({
-    queryKey: ["student-attendance", studentId],
-    enabled: !!teacher?.id,
+    queryKey: ["student-attendance", studentId, teacherId],
+    enabled: !!teacherId && !!student,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("attendance")
         .select("*, lessons(title, starts_at)")
         .eq("student_id", studentId)
+        .eq("teacher_id", teacherId!)
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data ?? [];
@@ -52,13 +56,14 @@ function StudentDetailPage() {
   });
 
   const { data: payments } = useQuery({
-    queryKey: ["student-payments", studentId],
-    enabled: !!teacher?.id,
+    queryKey: ["student-payments", studentId, teacherId],
+    enabled: !!teacherId && !!student,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("payments")
         .select("*")
         .eq("student_id", studentId)
+        .eq("teacher_id", teacherId!)
         .order("year", { ascending: false })
         .order("month", { ascending: false });
       if (error) throw error;
@@ -68,8 +73,18 @@ function StudentDetailPage() {
 
   if (!teacher) return null;
 
-  if (!student) {
+  if (studentPending) {
     return <p className="text-sm text-muted-foreground">جارٍ التحميل...</p>;
+  }
+  if (!student) {
+    return (
+      <div className="surface-card space-y-3 p-8 text-center">
+        <p className="font-medium">هذا الطالب غير موجود أو لا يتبعك.</p>
+        <Link to="/teacher/students" className="text-sm text-primary underline">
+          عودة للطلاب
+        </Link>
+      </div>
+    );
   }
 
   const totalLessons = attendance?.length ?? 0;
@@ -221,23 +236,8 @@ function StudentDetailPage() {
         </TabsContent>
 
         <TabsContent value="profile">
-          <div className="surface-card space-y-3 p-5 text-sm">
-            <p>
-              <span className="font-bold">الاسم:</span> {student.full_name}
-            </p>
-            <p>
-              <span className="font-bold">الصف الدراسي:</span> {student.grade_level || "—"}
-            </p>
-            <p>
-              <span className="font-bold">هاتف الطالب:</span> <span dir="ltr">{student.phone || "—"}</span>
-            </p>
-            <p>
-              <span className="font-bold">هاتف ولي الأمر:</span>{" "}
-              <span dir="ltr">{student.guardian_phone || "—"}</span>
-            </p>
-            <p>
-              <span className="font-bold">ملاحظات:</span> {student.notes || "—"}
-            </p>
+          <div className="surface-card p-5">
+            <StudentEditForm key={student.updated_at} student={student} teacherId={teacher.id} />
           </div>
         </TabsContent>
       </Tabs>
