@@ -110,6 +110,16 @@ function StudentDetailPage() {
             {student.grade_level || "بدون صف دراسي"}
             {student.phone ? ` · ${student.phone}` : ""}
           </p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            {student.user_id ? (
+              "حساب الطالب مرتبط"
+            ) : student.link_code ? (
+              <>
+                كود ربط حساب الطالب (يرسله للطالب ليُدخله في لوحته):{" "}
+                <span dir="ltr" className="font-mono font-bold text-foreground">{student.link_code}</span>
+              </>
+            ) : null}
+          </p>
           <div className="mt-2 flex flex-wrap gap-1">
             {enrollments.map((e, i) => (
               <Badge key={i} variant="secondary">

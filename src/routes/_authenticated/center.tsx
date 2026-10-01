@@ -120,6 +120,30 @@ function CenterDashboard() {
     onError: () => toast.error("تعذّر حفظ بيانات السنتر"),
   });
 
+  const { data: joinRequests } = useQuery({
+    queryKey: ["center-join-requests", centerId],
+    enabled: !!centerId,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("list_center_join_requests");
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const respond = useMutation({
+    mutationFn: async ({ id, approve }: { id: string; approve: boolean }) => {
+      const { error } = await supabase.rpc("respond_join_request", { _request_id: id, _approve: approve });
+      if (error) throw error;
+    },
+    onSuccess: (_d, v) => {
+      toast.success(v.approve ? "تم قبول المدرس في السنتر" : "تم رفض الطلب");
+      queryClient.invalidateQueries({ queryKey: ["center-join-requests"] });
+      queryClient.invalidateQueries({ queryKey: ["center-teachers"] });
+      queryClient.invalidateQueries({ queryKey: ["center-stats"] });
+    },
+    onError: () => toast.error("تعذّر تنفيذ الطلب"),
+  });
+
   const removeTeacher = useMutation({
     mutationFn: async (teacherId: string) => {
       const { error } = await supabase.rpc("remove_teacher_from_center", { _teacher_id: teacherId });
@@ -206,8 +230,22 @@ function CenterDashboard() {
             <section className="surface-card p-5">
               <h2 className="mb-1 text-lg font-bold">مدرسو السنتر</h2>
               <p className="mb-4 text-sm text-muted-foreground">
-                ينضم المدرس لسنترك باختياره من صفحة «ملفي». يمكنك فصل أي مدرس عن السنتر.
+                يرسل المدرس طلب انضمام من صفحة «ملفي» ولا ينضم إلا بعد موافقتك. يمكنك فصل أي مدرس عن السنتر.
               </p>
+              {!!joinRequests?.length && (
+                <div className="mb-4 space-y-2 rounded-lg border border-border p-3">
+                  <p className="text-sm font-medium">طلبات انضمام معلّقة</p>
+                  {joinRequests.map((r) => (
+                    <div key={r.id} className="flex flex-wrap items-center justify-between gap-2 text-sm">
+                      <span>{r.teacher_name} · {r.subject}</span>
+                      <div className="flex gap-2">
+                        <Button size="sm" onClick={() => respond.mutate({ id: r.id, approve: true })} disabled={respond.isPending}>قبول</Button>
+                        <Button size="sm" variant="outline" onClick={() => respond.mutate({ id: r.id, approve: false })} disabled={respond.isPending}>رفض</Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
               {teachers?.length ? (
                 <div className="divide-y divide-border">
                   {teachers.map((t) => {
