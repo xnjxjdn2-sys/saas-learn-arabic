@@ -1,7 +1,10 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { BookOpen, CalendarDays, GraduationCap, LogOut, ClipboardList, Wallet, Megaphone, FileText } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -141,6 +144,7 @@ function StudentDashboard() {
 
       <main className="mx-auto max-w-4xl space-y-6 p-4 md:p-8">
         <h1 className="text-2xl font-bold">أهلًا {profile?.full_name || "بك"}</h1>
+        <LinkCodeCard onLinked={() => queryClient.invalidateQueries({ queryKey: ["student-dashboard"] })} />
 
         <div className="grid gap-4 sm:grid-cols-3">
           <div className="surface-card p-5">
@@ -345,5 +349,33 @@ function StudentDashboard() {
         </Tabs>
       </main>
     </div>
+  );
+}
+
+function LinkCodeCard({ onLinked }: { onLinked: () => void }) {
+  const [code, setCode] = useState("");
+  const [busy, setBusy] = useState(false);
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    const { error } = await supabase.rpc("claim_student_link", { _code: code });
+    setBusy(false);
+    if (error) {
+      toast.error("الكود غير صحيح أو مستخدم من قبل");
+      return;
+    }
+    toast.success("تم ربط حسابك بسجلك عند المدرس");
+    setCode("");
+    onLinked();
+  }
+  return (
+    <form onSubmit={submit} className="surface-card flex flex-wrap items-end gap-2 p-4">
+      <div className="flex-1 space-y-1">
+        <p className="text-sm font-medium">ربط حسابك بمدرس</p>
+        <p className="text-xs text-muted-foreground">اطلب كود الربط من مدرسك وأدخله هنا.</p>
+        <Input dir="ltr" required value={code} onChange={(e) => setCode(e.target.value)} placeholder="ABC123DEF4" />
+      </div>
+      <Button type="submit" disabled={busy}>{busy ? "جارٍ الربط..." : "ربط"}</Button>
+    </form>
   );
 }

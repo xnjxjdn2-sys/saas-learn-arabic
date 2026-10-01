@@ -69,6 +69,69 @@ export type Database = {
           },
         ]
       }
+      center_join_requests: {
+        Row: {
+          center_id: string
+          created_at: string
+          id: string
+          responded_at: string | null
+          status: string
+          teacher_id: string
+        }
+        Insert: {
+          center_id: string
+          created_at?: string
+          id?: string
+          responded_at?: string | null
+          status?: string
+          teacher_id: string
+        }
+        Update: {
+          center_id?: string
+          created_at?: string
+          id?: string
+          responded_at?: string | null
+          status?: string
+          teacher_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "center_join_requests_center_id_fkey"
+            columns: ["center_id"]
+            isOneToOne: false
+            referencedRelation: "centers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "center_join_requests_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "teachers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      center_manager_invites: {
+        Row: {
+          code: string
+          created_at: string
+          used_at: string | null
+          used_by: string | null
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          used_at?: string | null
+          used_by?: string | null
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          used_at?: string | null
+          used_by?: string | null
+        }
+        Relationships: []
+      }
       centers: {
         Row: {
           address: string | null
@@ -465,6 +528,7 @@ export type Database = {
           grade_level: string | null
           guardian_phone: string | null
           id: string
+          link_code: string | null
           notes: string | null
           phone: string | null
           teacher_id: string
@@ -478,6 +542,7 @@ export type Database = {
           grade_level?: string | null
           guardian_phone?: string | null
           id?: string
+          link_code?: string | null
           notes?: string | null
           phone?: string | null
           teacher_id: string
@@ -491,6 +556,7 @@ export type Database = {
           grade_level?: string | null
           guardian_phone?: string | null
           id?: string
+          link_code?: string | null
           notes?: string | null
           phone?: string | null
           teacher_id?: string
@@ -590,7 +656,11 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      cancel_join_request: { Args: never; Returns: undefined }
+      claim_center_manager: { Args: { _code: string }; Returns: undefined }
+      claim_student_link: { Args: { _code: string }; Returns: string }
       current_teacher_id: { Args: never; Returns: string }
+      gen_link_code: { Args: never; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -600,6 +670,16 @@ export type Database = {
       }
       is_center_manager_of: { Args: { _center_id: string }; Returns: boolean }
       is_enrolled_student: { Args: { _class_id: string }; Returns: boolean }
+      leave_center: { Args: never; Returns: undefined }
+      list_center_join_requests: {
+        Args: never
+        Returns: {
+          created_at: string
+          id: string
+          subject: string
+          teacher_name: string
+        }[]
+      }
       list_centers_directory: {
         Args: never
         Returns: {
@@ -611,6 +691,11 @@ export type Database = {
       owns_teacher: { Args: { _teacher_id: string }; Returns: boolean }
       remove_teacher_from_center: {
         Args: { _teacher_id: string }
+        Returns: undefined
+      }
+      request_join_center: { Args: { _center_id: string }; Returns: string }
+      respond_join_request: {
+        Args: { _approve: boolean; _request_id: string }
         Returns: undefined
       }
     }

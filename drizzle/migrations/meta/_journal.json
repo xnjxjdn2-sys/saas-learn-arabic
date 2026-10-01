@@ -29,6 +29,13 @@
       "when": 1790785985989,
       "tag": "0003_ownership_integrity_and_center_manager",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1790845612671,
+      "tag": "0004_security_hardening_links_roles_centers",
+      "breakpoints": true
     }
   ]
 }
