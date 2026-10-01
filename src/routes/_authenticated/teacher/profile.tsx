@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useMyProfile, useMyTeacher, useSession } from "@/lib/auth";
 
@@ -67,7 +66,6 @@ function TeacherProfile() {
   const [stage, setStage] = useState("");
   const [phone, setPhone] = useState("");
   const [bio, setBio] = useState("");
-  const [inCenter, setInCenter] = useState(false);
   const [centerId, setCenterId] = useState<string>("");
 
   const { data: centers } = useQuery({
@@ -86,13 +84,45 @@ function TeacherProfile() {
       setStage(teacher.stage ?? "");
       setPhone(teacher.phone ?? "");
       setBio(teacher.bio ?? "");
-      setInCenter(!!teacher.center_id);
-      setCenterId(teacher.center_id ?? "");
     } else if (profile) {
       setFullName(profile.full_name);
       setPhone(profile.phone ?? "");
     }
   }, [teacher, profile]);
+
+  const { data: pending } = useQuery({
+    queryKey: ["my-join-request", teacher?.id],
+    enabled: !!teacher,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("center_join_requests")
+        .select("id, center_id, status")
+        .eq("teacher_id", teacher!.id)
+        .eq("status", "pending")
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const centerAction = useMutation({
+    mutationFn: async (action: "request" | "cancel" | "leave") => {
+      const r =
+        action === "request"
+          ? await supabase.rpc("request_join_center", { _center_id: centerId })
+          : action === "cancel"
+            ? await supabase.rpc("cancel_join_request")
+            : await supabase.rpc("leave_center");
+      if (r.error) throw r.error;
+      return action;
+    },
+    onSuccess: (a) => {
+      toast.success(a === "request" ? "تم إرسال طلب الانضمام لمدير السنتر" : a === "cancel" ? "تم إلغاء الطلب" : "أصبحت مدرسًا مستقلًا");
+      queryClient.invalidateQueries({ queryKey: ["my-join-request"] });
+      queryClient.invalidateQueries({ queryKey: ["my-teacher"] });
+    },
+    onError: () => toast.error("تعذّر تنفيذ الطلب"),
+  });
 
   const save = useMutation({
     mutationFn: async () => {
@@ -104,7 +134,6 @@ function TeacherProfile() {
         stage: stage || null,
         phone: phone || null,
         bio: bio || null,
-        center_id: inCenter && centerId ? centerId : null,
       };
       if (teacher) {
         const { error } = await supabase.from("teachers").update(payload).eq("id", teacher.id);
@@ -158,33 +187,40 @@ function TeacherProfile() {
           <Textarea id="bio" rows={3} value={bio} onChange={(e) => setBio(e.target.value)} />
         </div>
 
-        <div className="flex items-center justify-between rounded-lg border border-border p-4">
-          <div>
-            <p className="text-sm font-medium">مدرس تابع لسنتر</p>
-            <p className="text-xs text-muted-foreground">أطفئه إذا كنت مدرسًا مستقلًا.</p>
-          </div>
-          <Switch checked={inCenter} onCheckedChange={setInCenter} />
-        </div>
-
-        {inCenter && (
-          <div className="space-y-2">
-            <Label>السنتر</Label>
-            <Select value={centerId} onValueChange={setCenterId}>
-              <SelectTrigger>
-                <SelectValue placeholder="اختر السنتر" />
-              </SelectTrigger>
-              <SelectContent>
-                {(centers ?? []).map((c) => (
-                  <SelectItem key={c.id} value={c.id}>
-                    {c.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {!centers?.length && (
-              <p className="text-xs text-muted-foreground">
-                لا تظهر سناتر متاحة الآن. اطلب من مدير السنتر إضافتك، أو تابع كمدرس مستقل.
-              </p>
+        {teacher && (
+          <div className="space-y-3 rounded-lg border border-border p-4">
+            <p className="text-sm font-medium">السنتر</p>
+            {teacher.center_id ? (
+              <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
+                <span>أنت تابع لسنتر: {centers?.find((c) => c.id === teacher.center_id)?.name ?? "—"}</span>
+                <Button type="button" variant="outline" size="sm" onClick={() => centerAction.mutate("leave")} disabled={centerAction.isPending}>
+                  العمل كمدرس مستقل
+                </Button>
+              </div>
+            ) : pending ? (
+              <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
+                <span>طلب انضمام معلّق لسنتر: {centers?.find((c) => c.id === pending.center_id)?.name ?? "—"}</span>
+                <Button type="button" variant="outline" size="sm" onClick={() => centerAction.mutate("cancel")} disabled={centerAction.isPending}>
+                  إلغاء الطلب
+                </Button>
+              </div>
+            ) : (
+              <>
+                <p className="text-xs text-muted-foreground">أنت مدرس مستقل. للانضمام لسنتر أرسل طلبًا ويوافق عليه مدير السنتر.</p>
+                <div className="flex flex-wrap gap-2">
+                  <Select value={centerId} onValueChange={setCenterId}>
+                    <SelectTrigger className="w-60"><SelectValue placeholder="اختر السنتر" /></SelectTrigger>
+                    <SelectContent>
+                      {(centers ?? []).map((c) => (
+                        <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button type="button" size="sm" disabled={!centerId || centerAction.isPending} onClick={() => centerAction.mutate("request")}>
+                    إرسال طلب انضمام
+                  </Button>
+                </div>
+              </>
             )}
           </div>
         )}
