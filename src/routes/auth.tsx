@@ -190,6 +190,11 @@ function AuthPage() {
                         </label>
                       ))}
                     </RadioGroup>
+                    {role === "center_manager" && (
+                      <p className="text-xs text-muted-foreground">
+                        حساب مدير السنتر يحتاج كود تفعيل من إدارة المنصة، ستُدخله بعد تسجيل الدخول.
+                      </p>
+                    )}
                   </div>
                   <Button type="submit" className="w-full" disabled={loading}>
                     {loading ? "جارٍ الإنشاء..." : "إنشاء الحساب"}
