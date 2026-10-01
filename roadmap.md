@@ -19,3 +19,9 @@
 - المرحلة 4: امتحان الطالب + التصحيح
 - المرحلة 5: نظام السنتر
 - المرحلة 6: الباقات والاشتراكات
+
+## Security hardening (Oct 2026)
+- [x] Invite-code student linking (no phone auto-link)
+- [x] center_manager role only via backend invite code
+- [x] One center per manager, one role per account, one student record per account per teacher
+- [x] Center join requests with manager approval + center_id sync
